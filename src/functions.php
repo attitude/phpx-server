@@ -59,6 +59,21 @@ function Client(string $name, array $props = [], mixed $ssr = null): array
     ], $ssr === null ? [] : [$ssr]];
 }
 
+/**
+ * Build an error boundary node.
+ *
+ * Shape: `['$', 'ErrorBoundary', ['fallback' => <node|callable>], [<children>]]`.
+ * If rendering the children throws, {@see StreamingRenderer} renders the
+ * fallback instead. `$fallback` may be a closure receiving the Throwable.
+ * Only meaningful when streamed.
+ */
+function ErrorBoundary(mixed $fallback, mixed $children): array
+{
+    $children = (is_array($children) && ($children[0] ?? null) === '$') ? [$children] : (array) $children;
+
+    return ['$', 'ErrorBoundary', ['fallback' => $fallback], $children];
+}
+
 /** Convenience registration helper: `action('todo/add', fn($args) => ...)`. */
 function action(string $id, callable $fn): void
 {

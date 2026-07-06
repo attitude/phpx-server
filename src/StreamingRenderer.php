@@ -23,7 +23,7 @@ final class StreamingRenderer
 {
     private int $seq = 0;
 
-    /** @var array<int, array{fiber: Fiber, delay: float, work: callable}> */
+    /** @var array<int, array{fiber: Fiber, delay: float, work: callable, errorFallback: callable}> */
     private array $pending = [];
 
     /** @var array<string, callable> */
@@ -50,14 +50,15 @@ final class StreamingRenderer
             ob_end_flush();
         }
 
-        // Shell pass: 'Suspense' is a component that records pending boundaries
-        // and returns a placeholder. Everything else renders normally.
-        $shell = $this->newRenderer();
-        echo $shell->render($root, ['Suspense' => [$this, 'renderBoundary']] + $components);
+        // Shell pass: 'Suspense'/'ErrorBoundary' are components that record
+        // pending boundaries and return placeholders. Everything else renders
+        // normally. Boundaries may nest — resolving one can register more.
+        echo $this->renderWith($root);
         echo "\n";
         $this->flush();
 
-        // Resolve boundaries out of order: soonest-ready first.
+        // Resolve boundaries out of order: soonest-ready first. Boundaries
+        // discovered while resolving another are appended and picked up here.
         while ($this->pending !== []) {
             uasort($this->pending, static fn (array $a, array $b): int => $a['delay'] <=> $b['delay']);
             $id = array_key_first($this->pending);
@@ -70,12 +71,27 @@ final class StreamingRenderer
             }
             unset($other);
 
-            $html = $this->drive($job['fiber'], ($job['work'])());
+            try {
+                $html = $this->drive($job['fiber'], ($job['work'])());
+            } catch (\Throwable $e) {
+                // A boundary that errors while resolving streams its fallback
+                // instead of killing the whole response.
+                $html = $job['errorFallback']($e);
+            }
 
             echo "<template data-b=\"{$id}\">{$html}</template>";
             echo "<script>window.__rscSwap&&__rscSwap({$id})</script>\n";
             $this->flush();
         }
+    }
+
+    /** Render a node with Suspense + ErrorBoundary handling registered. */
+    private function renderWith(mixed $node): string
+    {
+        return $this->newRenderer()->render($node, [
+            'Suspense' => [$this, 'renderBoundary'],
+            'ErrorBoundary' => [$this, 'renderErrorBoundary'],
+        ] + $this->components);
     }
 
     /**
@@ -89,11 +105,10 @@ final class StreamingRenderer
     {
         $id = $this->seq++;
         $children = $props['children'] ?? [];
-        $components = $this->components;
 
-        $fiber = new Fiber(function () use ($children, $components): string {
-            return $this->newRenderer()->render($children, $components);
-        });
+        // Render children WITH boundary handling so nested Suspense/ErrorBoundary
+        // inside a suspended subtree register and stream too.
+        $fiber = new Fiber(fn (): string => $this->renderWith($children));
         /** @var array{delay: float, work: callable} $signal */
         $signal = $fiber->start();
 
@@ -102,15 +117,40 @@ final class StreamingRenderer
             return $this->rawHtml((string) $fiber->getReturn());
         }
 
+        // If this suspended subtree errors while resolving, show its fallback.
+        $errorFallback = fn (\Throwable $e): string => $this->newRenderer()->render($props['fallback'] ?? '');
+
         $this->pending[$id] = [
             'fiber' => $fiber,
             'delay' => $signal['delay'],
             'work' => $signal['work'],
+            'errorFallback' => $errorFallback,
         ];
 
         $fallbackHtml = $this->newRenderer()->render($props['fallback'] ?? '');
 
         return ['$', 'div', ['id' => "B:{$id}", 'dangerouslySetInnerHTML' => ['__html' => $fallbackHtml]]];
+    }
+
+    /**
+     * ErrorBoundary component. Renders its children; if rendering throws
+     * synchronously (a server component error), the fallback is rendered
+     * instead. `fallback` may be a closure receiving the Throwable.
+     *
+     * @internal Registered as the 'ErrorBoundary' component by {@see stream()}.
+     */
+    public function renderErrorBoundary(array $props): array
+    {
+        try {
+            return $this->rawHtml($this->renderWith($props['children'] ?? []));
+        } catch (\Throwable $e) {
+            $fallback = $props['fallback'] ?? '';
+            if ($fallback instanceof \Closure) {
+                $fallback = $fallback($e);
+            }
+
+            return $this->rawHtml($this->newRenderer()->render($fallback));
+        }
     }
 
     /**

@@ -95,3 +95,25 @@ same *declarative* model React uses: you wrap a subtree in `Suspense`, call
 `await()` where you need to wait on something, and the renderer figures out
 the streaming order for you. The component that calls `await()` doesn't know
 or care whether it's being streamed — it reads the same either way.
+
+## Nested and parallel boundaries
+
+Boundaries compose. A suspended subtree can contain its own `Suspense` boundaries; when the outer one resolves, any inner boundaries it reveals are streamed in turn. Independent boundaries at the same level resolve in parallel, each arriving as soon as its own data is ready — the fiber scheduler tracks them all and streams whichever finishes first.
+
+## Error boundaries
+
+`ErrorBoundary(fallback, children)` is the error counterpart to `Suspense`. If rendering the children throws, the fallback is rendered instead of the subtree.
+
+```php
+use function Attitude\PHPX\Server\ErrorBoundary;
+
+ErrorBoundary(
+    ['$', 'p', ['className' => 'Error'], ['Could not load this section.']],
+    ['$', $RiskyComponent]
+);
+```
+
+Two cases are handled:
+
+- **Synchronous errors** — a server component that throws while rendering is caught immediately and its boundary renders the fallback in the shell.
+- **Errors while streaming** — if a *suspended* subtree throws when its data resolves, the stream doesn't die; that boundary streams its fallback and the rest of the page continues. `fallback` may be a closure receiving the `Throwable`.
