@@ -181,7 +181,13 @@ export function initFlight(): void {
     if (!link || link.origin !== location.origin) return
 
     event.preventDefault()
-    void navigate(link.href, true)
+    // Links marked data-flight-stream use the streaming (NDJSON) transport so
+    // Suspense boundaries in the target view arrive progressively.
+    if (link.hasAttribute('data-flight-stream')) {
+      void streamNavigate(link.href, true)
+    } else {
+      void navigate(link.href, true)
+    }
   })
 
   // Prefetch on hover: warm the Flight payload as soon as the pointer enters

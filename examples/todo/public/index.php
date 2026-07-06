@@ -89,7 +89,11 @@ $viewContent = ($views[$current])();
 Head::title('PHPX Todo · ' . ucfirst($current));
 Head::meta(['name' => 'description', 'content' => 'A todo app demonstrating server components, Suspense streaming, and server actions in PHP.']);
 
-// ---- Flight navigation: return the serialized view tree as JSON ------------
+// ---- Flight navigation: return the serialized view tree --------------------
+// Streaming (NDJSON, out of order) if asked; otherwise a single JSON payload.
+if (Flight::wantsStream()) {
+    Flight::stream($viewContent, $components);
+}
 if (Flight::wants()) {
     Flight::respond($viewContent, $components);
 }

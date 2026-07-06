@@ -34,10 +34,17 @@ server half.
 | RSC capability | Ported here | How |
 | --- | --- | --- |
 | **Server components** | ✅ | PHPX components run on the server and render to HTML. This *is* PHP. |
-| **Suspense streaming** | ✅ | A `Suspense` boundary + PHP **Fibers**: the shell streams first, boundaries resolve out of order. |
-| **Server actions** | ✅ | A named-callable registry, invoked by a plain `<form>` (no JS) **or** by `fetch` (JSON). |
-| **Client components** | ✅ | `Client('Name', $props)` emits a serializable reference; a React island mounts into it. |
 | **The boundary ("the door")** | ✅ | Only JSON-serializable props cross to the client. Closures stay on the server. |
+| **Suspense streaming** | ✅ | A `Suspense` boundary + PHP **Fibers**: the shell streams first, boundaries resolve out of order. |
+| **Nested / parallel Suspense** | ✅ | Boundaries nest arbitrarily; independent ones resolve in parallel. |
+| **Error boundaries** | ✅ | `ErrorBoundary` catches a subtree's error and streams a fallback. |
+| **Client components** | ✅ | `Client('Name', $props)` emits a serializable reference; a React island mounts into it. |
+| **Server actions** | ✅ | A named-callable registry, invoked by a plain `<form>` (no JS) **or** by `fetch` (JSON); `redirect()` supported. |
+| **Flight navigation** | ✅ | The server returns the serialized tuple tree as JSON; the client rebuilds the view, no reload. |
+| **Streaming Flight** | ✅ | The Flight payload as NDJSON — shell first, boundaries out of order. |
+| **`cache()`** | ✅ | Per-request memoization / dedup of data loading. |
+| **Head & metadata** | ✅ | Components/routes contribute `<title>`/`<meta>`/`<link>`, hoisted into `<head>`. |
+| **Router UX** | ✅ | Prefetch-on-hover and a pending indicator during navigation. |
 
 ## The honest limit
 
