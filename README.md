@@ -16,11 +16,17 @@ PHP already lives on the server side of that door. PHPX compiles JSX-like markup
 | RSC capability | Ported here | How |
 | --- | --- | --- |
 | **Server components** | ✅ | PHPX components run on the server and render to HTML. This *is* PHP. |
+| **The boundary ("the door")** | ✅ | Only JSON-serializable props cross to the client. Closures stay on the server. Tuples are the wire format. |
 | **Suspense streaming** | ✅ | A `Suspense` boundary + PHP **Fibers**: the shell streams first, boundaries resolve out of order. |
-| **Server actions** | ✅ | A named-callable registry, invoked by a plain `<form>` (no JS) **or** by `fetch` (JSON). |
+| **Nested / parallel Suspense** | ✅ | Boundaries nest arbitrarily; independent ones resolve in parallel, streaming as each is ready. |
+| **Error boundaries** | ✅ | `ErrorBoundary` catches a subtree's error (sync or while streaming) and streams a fallback. |
 | **Client components** | ✅ | `Client('Name', $props)` emits a serializable reference; a React island mounts into it. |
+| **Server actions** | ✅ | A named-callable registry, invoked by a plain `<form>` (no JS) **or** by `fetch` (JSON); `redirect()` supported. |
 | **Flight navigation** | ✅ | Client-driven route changes: the server returns the serialized tuple tree as JSON; the client rebuilds the view and re-mounts islands, no reload. |
-| **The boundary ("the door")** | ✅ | Only JSON-serializable props cross to the client. Closures stay on the server. |
+| **Streaming Flight** | ✅ | The Flight payload streamed as NDJSON — shell first, boundaries out of order — same Fiber scheduler as HTML streaming. |
+| **`cache()`** | ✅ | Per-request memoization / request-level dedup of data loading ("freeze the dough"). |
+| **Head & metadata** | ✅ | Components/routes contribute `<title>`/`<meta>`/`<link>`, hoisted into `<head>` (React 19 style). |
+| **Router UX** | ✅ | Prefetch-on-hover and a pending indicator during navigation — progressive, no effect without JS. |
 
 The one hard limit is physics: **browser interactivity needs JavaScript.** Server components port for free; interactive leaves are React islands — progressive enhancement, not isomorphism.
 
