@@ -61,15 +61,22 @@ $AddForm = function (): array {
 $Nav = function (array $props): array {
     ['current' => $current] = $props;
 
-    $link = fn(string $href, string $label, string $key): array => (
-        ['$', 'a', ['href'=>($href), 'data-flight-link'=>true, 'className'=>(['NavLink' => true, 'is-active' => $current === $key])], [
+    // $stream opts a link into streaming Flight navigation (NDJSON). The Todos
+    // view has a Suspense-streamed list, so it shows the payload arriving.
+    $link = fn(string $href, string $label, string $key, bool $stream = false): array => (
+        ['$', 'a', [
+            'href'=>($href),
+            'data-flight-link'=>true,
+            'data-flight-stream'=>($stream ? 'true' : null),
+            'className'=>(['NavLink' => true, 'is-active' => $current === $key]),
+        ], [
             ($label),
         ]]
     );
 
     return (
         ['$', 'nav', ['className'=>"NavView"], [
-            ($link('/', 'Todos', 'todos')),
+            ($link('/', 'Todos', 'todos', true)),
             ($link('/stats', 'Stats', 'stats')),
             ($link('/about', 'About', 'about')),
         ]]
