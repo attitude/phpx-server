@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # Lints the library with phpstan, compiles the example .phpx components,
+  # runs PHP tests if any exist yet, and smoke-tests the example server.
+  php:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['8.1', '8.3']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP ${{ matrix.php-version }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-interaction
+
+      - name: Static analysis (phpstan)
+        run: composer analyse
+
+      - name: Compile example components
+        run: composer example:compile
+
+      - name: Assert example components were compiled
+        run: |
+          if [ ! -f examples/todo/src/components.php ]; then
+            echo "examples/todo/src/components.php was not generated" >&2
+            exit 1
+          fi
+
+      # No tests exist yet; this becomes a real test run automatically once a
+      # future PR adds phpunit.xml (or phpunit.xml.dist) and a `test` script.
+      - name: Run PHP tests (if present)
+        run: |
+          if [ -f phpunit.xml ] || [ -f phpunit.xml.dist ]; then
+            composer test
+          else
+            echo "No phpunit.xml(.dist) found, skipping tests."
+          fi
+
+      - name: Smoke-test the example server
+        run: |
+          php -S 127.0.0.1:8080 -t examples/todo/public examples/todo/public/router.php &
+          SERVER_PID=$!
+          sleep 1
+
+          # Initial shell: client island marker + Suspense fallback.
+          BODY="$(curl -sf --max-time 5 http://127.0.0.1:8080/)"
+          echo "$BODY" | grep -qF 'data-client="TodoApp"' || { echo "missing data-client marker" >&2; kill "$SERVER_PID"; exit 1; }
+          echo "$BODY" | grep -qF 'Loading todos…' || { echo "missing Suspense fallback" >&2; kill "$SERVER_PID"; exit 1; }
+
+          # Streamed chunk: the suspended list arrives out of band.
+          STREAM="$(curl -sf -N --max-time 5 http://127.0.0.1:8080/)"
+          echo "$STREAM" | grep -qF 'template data-b=' || { echo "missing streamed template marker" >&2; kill "$SERVER_PID"; exit 1; }
+
+          kill "$SERVER_PID"
+
+  # Builds the React client island and checks that Vite emitted a manifest
+  # entry for the client entrypoint.
+  client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
+          cache-dependency-path: examples/todo/pnpm-lock.yaml
+
+      - name: Install client dependencies
+        run: pnpm --dir examples/todo install
+
+      - name: Build client
+        run: pnpm --dir examples/todo build
+
+      - name: Assert Vite manifest was generated
+        run: |
+          MANIFEST=examples/todo/public/dist/.vite/manifest.json
+          if [ ! -f "$MANIFEST" ]; then
+            echo "$MANIFEST was not generated" >&2
+            exit 1
+          fi
+          grep -q 'src/client/main.tsx' "$MANIFEST" || { echo "manifest missing src/client/main.tsx entry" >&2; exit 1; }
