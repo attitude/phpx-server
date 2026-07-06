@@ -58,8 +58,60 @@ $AddForm = function (): array {
     );
 };
 
+$Nav = function (array $props): array {
+    ['current' => $current] = $props;
+
+    $link = fn(string $href, string $label, string $key): array => (
+        <a href={$href} data-flight-link className={['NavLink' => true, 'is-active' => $current === $key]}>
+            {$label}
+        </a>
+    );
+
+    return (
+        <nav className="NavView">
+            {$link('/', 'Todos', 'todos')}
+            {$link('/stats', 'Stats', 'stats')}
+            {$link('/about', 'About', 'about')}
+        </nav>
+    );
+};
+
+$AboutView = function (): array {
+    return (
+        <div className="ProseView">
+            <h2 className="ProseHeadingText">About this demo</h2>
+            <p className="ProseText">
+                Every page you navigate to here is a server component rendered by PHPX. Clicking the
+                nav does not reload the page — the browser fetches a Flight-style JSON payload (the
+                serialized tuple tree), rebuilds the view, and boots any React islands in place.
+            </p>
+            <p className="ProseText">
+                Turn JavaScript off and the same links still work as plain server-rendered navigation.
+            </p>
+        </div>
+    );
+};
+
+$StatsView = function (array $props): array {
+    ['total' => $total, 'done' => $done, 'active' => $active] = $props;
+
+    return (
+        <div className="ProseView">
+            <h2 className="ProseHeadingText">Stats</h2>
+            <ul className="StatsListView">
+                <li className="StatsItemView">Total<span className="StatsNumberText">{$total}</span></li>
+                <li className="StatsItemView">Completed<span className="StatsNumberText">{$done}</span></li>
+                <li className="StatsItemView">Active<span className="StatsNumberText">{$active}</span></li>
+            </ul>
+        </div>
+    );
+};
+
 return [
     'TodoItem' => $TodoItem,
     'TodoList' => $TodoList,
     'AddForm' => $AddForm,
+    'Nav' => $Nav,
+    'AboutView' => $AboutView,
+    'StatsView' => $StatsView,
 ];

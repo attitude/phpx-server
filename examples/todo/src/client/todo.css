@@ -312,3 +312,84 @@ body {
     text-align: center;
   }
 }
+
+/* ---- Flight navigation: nav bar + secondary views ---------------------- */
+.NavView {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin: 18px 0 24px;
+}
+
+.NavLink {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.NavLink:hover {
+  border-color: var(--border);
+  color: var(--text-h);
+}
+
+.NavLink.is-active {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.ViewRootView {
+  min-height: 140px;
+}
+
+.ProseView {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px 26px;
+  box-shadow: var(--shadow);
+}
+
+.ProseHeadingText {
+  margin: 0 0 12px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-h);
+}
+
+.ProseText {
+  margin: 0 0 12px;
+}
+
+.ProseText:last-child {
+  margin-bottom: 0;
+}
+
+.StatsListView {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.StatsItemView {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.StatsNumberText {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+}

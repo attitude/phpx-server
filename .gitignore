@@ -13,3 +13,6 @@ docs/.docusaurus/
 # OS / editor
 .DS_Store
 *.log
+
+# PHPUnit
+.phpunit.result.cache

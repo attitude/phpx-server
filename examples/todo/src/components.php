@@ -58,8 +58,60 @@ $AddForm = function (): array {
     );
 };
 
+$Nav = function (array $props): array {
+    ['current' => $current] = $props;
+
+    $link = fn(string $href, string $label, string $key): array => (
+        ['$', 'a', ['href'=>($href), 'data-flight-link'=>true, 'className'=>(['NavLink' => true, 'is-active' => $current === $key])], [
+            ($label),
+        ]]
+    );
+
+    return (
+        ['$', 'nav', ['className'=>"NavView"], [
+            ($link('/', 'Todos', 'todos')),
+            ($link('/stats', 'Stats', 'stats')),
+            ($link('/about', 'About', 'about')),
+        ]]
+    );
+};
+
+$AboutView = function (): array {
+    return (
+        ['$', 'div', ['className'=>"ProseView"], [
+            ['$', 'h2', ['className'=>"ProseHeadingText"], ['About this demo']],
+            ['$', 'p', ['className'=>"ProseText"], [
+                'Every page you navigate to here is a server component rendered by PHPX. Clicking the
+                nav does not reload the page — the browser fetches a Flight-style JSON payload (the
+                serialized tuple tree), rebuilds the view, and boots any React islands in place.',
+            ]],
+            ['$', 'p', ['className'=>"ProseText"], [
+                'Turn JavaScript off and the same links still work as plain server-rendered navigation.',
+            ]],
+        ]]
+    );
+};
+
+$StatsView = function (array $props): array {
+    ['total' => $total, 'done' => $done, 'active' => $active] = $props;
+
+    return (
+        ['$', 'div', ['className'=>"ProseView"], [
+            ['$', 'h2', ['className'=>"ProseHeadingText"], ['Stats']],
+            ['$', 'ul', ['className'=>"StatsListView"], [
+                ['$', 'li', ['className'=>"StatsItemView"], ['Total', ['$', 'span', ['className'=>"StatsNumberText"], [($total)]]]],
+                ['$', 'li', ['className'=>"StatsItemView"], ['Completed', ['$', 'span', ['className'=>"StatsNumberText"], [($done)]]]],
+                ['$', 'li', ['className'=>"StatsItemView"], ['Active', ['$', 'span', ['className'=>"StatsNumberText"], [($active)]]]],
+            ]],
+        ]]
+    );
+};
+
 return [
     'TodoItem' => $TodoItem,
     'TodoList' => $TodoList,
     'AddForm' => $AddForm,
+    'Nav' => $Nav,
+    'AboutView' => $AboutView,
+    'StatsView' => $StatsView,
 ];
