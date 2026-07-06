@@ -94,3 +94,16 @@ function actionFields(string $id, array $args = []): array
 
     return $fields;
 }
+
+/**
+ * Wrap $fn so repeated calls with the same arguments are memoized — the PHP
+ * equivalent of React's `cache()`. See {@see Cache} for the memoization rules.
+ *
+ *   $getUser = cache(fn (string $id) => $db->user($id));
+ *   $getUser('42'); // runs the query
+ *   $getUser('42'); // returns the stored result
+ */
+function cache(callable $fn): callable
+{
+    return fn (mixed ...$args) => Cache::memoize($fn, $args);
+}
