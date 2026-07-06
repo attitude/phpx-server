@@ -73,6 +73,19 @@ function setActive(pathname: string): void {
   })
 }
 
+// Prefetch cache: hovering a flight link warms the Flight payload before the
+// click lands, so the navigation below can await the already-inflight
+// request instead of starting a fresh one.
+const prefetchCache = new Map<string, Promise<unknown>>()
+
+function prefetch(url: string): void {
+  if (prefetchCache.has(url)) return
+  prefetchCache.set(
+    url,
+    fetch(url, { headers: { 'X-Flight': '1' } }).then((res) => res.json())
+  )
+}
+
 async function navigate(url: string, push: boolean): Promise<void> {
   const root = document.getElementById('view-root')
   if (!root) {
@@ -80,15 +93,20 @@ async function navigate(url: string, push: boolean): Promise<void> {
     return
   }
 
+  document.documentElement.setAttribute('data-flight-pending', '1')
   try {
-    const res = await fetch(url, { headers: { 'X-Flight': '1' } })
-    const tree = (await res.json()) as unknown
+    const cached = prefetchCache.get(url)
+    prefetchCache.delete(url) // re-fetch next time, even on failure
+
+    const tree = (await (cached ?? fetch(url, { headers: { 'X-Flight': '1' } }).then((res) => res.json()))) as unknown
     root.replaceChildren(toNode(tree))
     mountIslands(root)
     setActive(new URL(url).pathname)
     if (push) history.pushState({ flight: true }, '', url)
   } catch {
     location.href = url // fall back to a real navigation
+  } finally {
+    document.documentElement.removeAttribute('data-flight-pending')
   }
 }
 
@@ -104,6 +122,7 @@ export async function streamNavigate(url: string, push = true): Promise<void> {
     return
   }
 
+  document.documentElement.setAttribute('data-flight-pending', '1')
   try {
     const res = await fetch(url, { headers: { 'X-Flight-Stream': '1' } })
     if (!res.body) throw new Error('no stream')
@@ -131,6 +150,10 @@ export async function streamNavigate(url: string, push = true): Promise<void> {
           setActive(new URL(url).pathname)
           if (push) history.pushState({ flight: true }, '', url)
           first = false
+          // The shell (with fallback placeholders) is now visible — the point
+          // the user perceives the navigation as done, even if boundaries are
+          // still streaming in.
+          document.documentElement.removeAttribute('data-flight-pending')
         } else {
           const row = msg as { b: number; tree: unknown }
           const slot = document.getElementById('F:' + row.b)
@@ -143,6 +166,8 @@ export async function streamNavigate(url: string, push = true): Promise<void> {
     }
   } catch {
     location.href = url
+  } finally {
+    document.documentElement.removeAttribute('data-flight-pending')
   }
 }
 
@@ -157,6 +182,16 @@ export function initFlight(): void {
 
     event.preventDefault()
     void navigate(link.href, true)
+  })
+
+  // Prefetch on hover: warm the Flight payload as soon as the pointer enters
+  // a link, so the click above often just awaits an already-inflight fetch.
+  document.addEventListener('mouseover', (event) => {
+    const target = event.target as HTMLElement | null
+    const link = target?.closest?.('a[data-flight-link]') as HTMLAnchorElement | null
+    if (!link || link.origin !== location.origin) return
+
+    prefetch(link.href)
   })
 
   window.addEventListener('popstate', () => {

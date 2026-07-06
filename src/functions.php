@@ -107,3 +107,26 @@ function cache(callable $fn): callable
 {
     return fn (mixed ...$args) => Cache::memoize($fn, $args);
 }
+
+/**
+ * Redirect the client to $url — usable inside a server action, the PHP
+ * equivalent of calling `redirect()` from a Next.js/RSC server action.
+ *
+ * A Flight/JSON request (client-driven navigation, or the JSON fetch a server
+ * action call makes) can't follow a raw HTTP redirect the way a full page
+ * load would, so it gets a small JSON envelope the client understands
+ * instead; any other request gets a real HTTP redirect.
+ */
+function redirect(string $url, int $status = 303): never
+{
+    $isJson = str_contains($_SERVER['CONTENT_TYPE'] ?? '', 'application/json');
+
+    if (Flight::wants() || $isJson) {
+        header('Content-Type: application/json');
+        echo json_encode(['__redirect' => $url]);
+        exit;
+    }
+
+    header('Location: ' . $url, true, $status);
+    exit;
+}
