@@ -92,6 +92,60 @@ async function navigate(url: string, push: boolean): Promise<void> {
   }
 }
 
+/**
+ * Streaming Flight navigation: read the NDJSON payload row by row. The first
+ * row is the shell (with fallback placeholders); each later row patches a
+ * `#F:<n>` boundary as it resolves — out of order, as they arrive.
+ */
+export async function streamNavigate(url: string, push = true): Promise<void> {
+  const root = document.getElementById('view-root')
+  if (!root) {
+    location.href = url
+    return
+  }
+
+  try {
+    const res = await fetch(url, { headers: { 'X-Flight-Stream': '1' } })
+    if (!res.body) throw new Error('no stream')
+
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    let first = true
+
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+
+      let nl: number
+      while ((nl = buffer.indexOf('\n')) >= 0) {
+        const line = buffer.slice(0, nl).trim()
+        buffer = buffer.slice(nl + 1)
+        if (!line) continue
+
+        const msg = JSON.parse(line) as unknown
+        if (first) {
+          root.replaceChildren(toNode(msg))
+          mountIslands(root)
+          setActive(new URL(url).pathname)
+          if (push) history.pushState({ flight: true }, '', url)
+          first = false
+        } else {
+          const row = msg as { b: number; tree: unknown }
+          const slot = document.getElementById('F:' + row.b)
+          if (slot) {
+            slot.replaceChildren(toNode(row.tree))
+            mountIslands(slot)
+          }
+        }
+      }
+    }
+  } catch {
+    location.href = url
+  }
+}
+
 export function initFlight(): void {
   document.addEventListener('click', (event) => {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {

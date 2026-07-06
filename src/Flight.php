@@ -33,11 +33,31 @@ final class Flight
             || str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/x-component');
     }
 
+    /** Does the request want a *streaming* (NDJSON) Flight payload? */
+    public static function wantsStream(): bool
+    {
+        return isset($_GET['__flight_stream'])
+            || ($_SERVER['HTTP_X_FLIGHT_STREAM'] ?? '') === '1'
+            || str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/x-ndjson');
+    }
+
     /** Serialize a tree, emit it as JSON with the right header, and stop. */
     public static function respond(mixed $node, array $components = []): void
     {
         header('Content-Type: application/x-component+json; charset=utf-8');
         echo json_encode(self::serialize($node, $components), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    /**
+     * Stream a tree as NDJSON Flight rows (shell first, then boundaries out of
+     * order as they resolve), then stop. See {@see FlightStream}.
+     */
+    public static function stream(mixed $node, array $components = []): void
+    {
+        header('Content-Type: application/x-ndjson; charset=utf-8');
+        header('X-Accel-Buffering: no');
+        (new FlightStream())->stream($node, $components);
         exit;
     }
 
