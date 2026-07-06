@@ -1,0 +1,38 @@
+{
+    "name": "attitude/phpx-server",
+    "description": "React Server Components ideas — server components, Suspense streaming, and server actions — ported to PHP with PHPX.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["phpx", "rsc", "react-server-components", "streaming", "suspense", "server-actions", "ssr"],
+    "authors": [
+        { "name": "Martin Adamko", "homepage": "https://www.threads.net/@martin_adamko" }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "attitude/phpx": "dev-main"
+    },
+    "require-dev": {
+        "mindplay/php-vite": "^1.1",
+        "phpstan/phpstan": "^2.0"
+    },
+    "repositories": [
+        { "type": "vcs", "url": "https://github.com/attitude/phpx" }
+    ],
+    "autoload": {
+        "psr-4": { "Attitude\\PHPX\\Server\\": "src/" },
+        "files": ["src/functions.php"]
+    },
+    "autoload-dev": {
+        "psr-4": { "Attitude\\PHPX\\Server\\Examples\\Todo\\": "examples/todo/src/" }
+    },
+    "scripts": {
+        "analyse": "phpstan analyse",
+        "example:compile": "php examples/todo/compile.php",
+        "example:build": "pnpm --dir examples/todo install && pnpm --dir examples/todo build && php examples/todo/compile.php",
+        "example:serve": "php -S localhost:8080 -t examples/todo/public examples/todo/public/router.php"
+    },
+    "config": {
+        "process-timeout": 0,
+        "allow-plugins": {}
+    }
+}

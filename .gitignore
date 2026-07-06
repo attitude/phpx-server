@@ -1,0 +1,15 @@
+# PHP
+/vendor/
+composer.lock
+
+# Node
+node_modules/
+examples/todo/public/dist/
+
+# Docs build
+docs/build/
+docs/.docusaurus/
+
+# OS / editor
+.DS_Store
+*.log
