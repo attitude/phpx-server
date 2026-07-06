@@ -16,3 +16,6 @@ docs/.docusaurus/
 
 # PHPUnit
 .phpunit.result.cache
+
+# Agent worktrees
+.claude/worktrees/

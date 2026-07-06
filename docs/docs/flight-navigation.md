@@ -73,7 +73,8 @@ async function navigate(url: string, push: boolean) {
 
 Every `data-flight-link` is a real `<a href>`. With JavaScript off, the links are ordinary navigation and each route renders as a full server page. With JavaScript on, the same clicks become instant Flight swaps. Same URLs, same server code — the enhancement is entirely additive.
 
+This page uses the non-streaming endpoint (`Flight::respond()`), which resolves the whole view before sending. To send it progressively — fallbacks first, boundaries filled in as they resolve — see [Streaming Flight](./streaming-flight).
+
 ## What's intentionally not here (yet)
 
-- **Streaming Flight.** The payload is resolved fully before sending. Streaming a Flight response (like the HTML [Suspense streaming](./suspense-streaming)) is future work.
 - **Root unmounting.** Navigating away replaces the DOM; React roots from the old view are dropped rather than formally unmounted. Fine for a demo, worth tightening for production.
