@@ -11,6 +11,10 @@ async function callAction(id: ActionId, args: Record<string, unknown>): Promise<
     body: JSON.stringify({ id, args }),
   })
   const data = await res.json()
+  if (typeof data.__redirect === 'string') {
+    window.location.href = data.__redirect // hard navigation, page unloads
+    return []
+  }
   return data.todos as Todo[]
 }
 

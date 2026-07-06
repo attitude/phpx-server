@@ -393,3 +393,27 @@ body {
   font-weight: 700;
   color: var(--accent);
 }
+
+/* Pending indicator: a slim indeterminate bar shown while a Flight
+   navigation is in flight. Toggled by flight.ts via a `data-flight-pending`
+   attribute on the root element — no extra markup needed. */
+:root[data-flight-pending]::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 999;
+  height: 3px;
+  width: 40%;
+  background: var(--accent);
+  animation: flight-pending-slide 1s ease-in-out infinite;
+}
+
+@keyframes flight-pending-slide {
+  0% {
+    left: -40%;
+  }
+  100% {
+    left: 100%;
+  }
+}
