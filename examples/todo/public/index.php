@@ -17,6 +17,7 @@ use mindplay\vite\Manifest;
 use Attitude\PHPX\Server\StreamingRenderer;
 use Attitude\PHPX\Server\Actions;
 use Attitude\PHPX\Server\Flight;
+use Attitude\PHPX\Server\Head;
 use Attitude\PHPX\Server\Examples\Todo\Store;
 use function Attitude\PHPX\Server\Suspense;
 use function Attitude\PHPX\Server\Client;
@@ -84,6 +85,10 @@ $current = match ($path) {
 };
 $viewContent = ($views[$current])();
 
+// ---- Per-route head metadata, hoisted into <head> during the shell render --
+Head::title('PHPX Todo · ' . ucfirst($current));
+Head::meta(['name' => 'description', 'content' => 'A todo app demonstrating server components, Suspense streaming, and server actions in PHP.']);
+
 // ---- Flight navigation: return the serialized view tree as JSON ------------
 if (Flight::wants()) {
     Flight::respond($viewContent, $components);
@@ -114,7 +119,7 @@ $page = ['$', 'html', ['lang' => 'en'], [
     ['$', 'head', null, [
         ['$', 'meta', ['charSet' => 'UTF-8']],
         ['$', 'meta', ['name' => 'viewport', 'content' => 'width=device-width, initial-scale=1']],
-        ['$', 'title', null, ['PHPX Server · RSC Todo']],
+        ['$', 'fragment', ['dangerouslySetInnerHTML' => ['__html' => Head::marker()]]],
         ['$', 'fragment', ['dangerouslySetInnerHTML' => ['__html' => $head]]],
     ]],
     ['$', 'body', null, [

@@ -4,6 +4,7 @@ namespace Attitude\PHPX\Server;
 
 use Fiber;
 use Attitude\PHPX\Renderer\Renderer;
+use Attitude\PHPX\Server\Head;
 
 /**
  * Streaming renderer with Suspense boundaries, built on the PHPX Renderer.
@@ -53,7 +54,15 @@ final class StreamingRenderer
         // Shell pass: 'Suspense'/'ErrorBoundary' are components that record
         // pending boundaries and return placeholders. Everything else renders
         // normally. Boundaries may nest — resolving one can register more.
-        echo $this->renderWith($root);
+        //
+        // Components anywhere in this pass may call Head::title()/push() etc.
+        // Once the shell string is complete, every such call has happened, so
+        // we can fill in the Head::marker() placeholder before echoing. Only
+        // this initial shell can contribute head tags: content streamed in
+        // later (resolved Suspense boundaries) arrives after the <head> is
+        // already sent to the client.
+        $shell = $this->renderWith($root);
+        echo str_replace(Head::marker(), Head::render(), $shell);
         echo "\n";
         $this->flush();
 
