@@ -13,7 +13,8 @@
     },
     "require-dev": {
         "mindplay/php-vite": "^1.1",
-        "phpstan/phpstan": "^2.0"
+        "phpstan/phpstan": "^2.0",
+        "phpunit/phpunit": "^10.0"
     },
     "repositories": [
         { "type": "vcs", "url": "https://github.com/attitude/phpx" }
@@ -26,6 +27,7 @@
         "psr-4": { "Attitude\\PHPX\\Server\\Examples\\Todo\\": "examples/todo/src/" }
     },
     "scripts": {
+        "test": "phpunit",
         "analyse": "phpstan analyse",
         "example:compile": "php examples/todo/compile.php",
         "example:build": "pnpm --dir examples/todo install && pnpm --dir examples/todo build && php examples/todo/compile.php",
