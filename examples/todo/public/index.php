@@ -4,18 +4,19 @@
  * The todo example — a working CRUD app that exercises every RSC idea ported to
  * PHP by phpx-server:
  *
- *   - Server components : the list is rendered on the server (components.phpx)
- *   - Suspense streaming : the list arrives after the shell, out of band
+ *   - Server components : every view is rendered on the server (components.phpx)
+ *   - Suspense streaming : the todo list arrives after the shell, out of band
  *   - Server actions     : add/toggle/delete, usable with OR without JS
- *   - Client island      : React enhances the same markup once it loads
- *
- * With JavaScript off this is a complete, streaming, form-driven app.
- * With JavaScript on React takes over for an instant, optimistic UI.
+ *   - Client island      : React enhances the todo list once it loads
+ *   - Flight navigation  : the nav fetches a serialized tuple tree (JSON) and
+ *                          swaps the view in place — no full reload, islands
+ *                          re-mount. Works as plain navigation with JS off.
  */
 
 use mindplay\vite\Manifest;
 use Attitude\PHPX\Server\StreamingRenderer;
 use Attitude\PHPX\Server\Actions;
+use Attitude\PHPX\Server\Flight;
 use Attitude\PHPX\Server\Examples\Todo\Store;
 use function Attitude\PHPX\Server\Suspense;
 use function Attitude\PHPX\Server\Client;
@@ -26,7 +27,7 @@ require __DIR__ . '/../../../vendor/autoload.php';
 
 /** @var array<string, callable> $components */
 $components = require __DIR__ . '/../src/components.php';
-['TodoList' => $TodoList, 'AddForm' => $AddForm] = $components;
+['TodoList' => $TodoList, 'AddForm' => $AddForm, 'Nav' => $Nav, 'AboutView' => $AboutView, 'StatsView' => $StatsView] = $components;
 
 $store = new Store();
 action('todo/add', fn (array $a) => $store->add((string) ($a['text'] ?? '')));
@@ -44,9 +45,48 @@ if ($req = Actions::fromRequest()) {
         exit;
     }
 
-    // Progressive-enhancement path: Post/Redirect/Get, no JS involved.
     header('Location: ' . $_SERVER['REQUEST_URI']);
     exit;
+}
+
+// ---- The views (each is a server-rendered tuple tree) ---------------------
+$todos = $store->all();
+
+$LazyList = function () use ($TodoList): array {
+    $todos = await(0.9, fn () => (new Store())->all()); // suspends the fiber
+    return ['$', $TodoList, ['todos' => $todos]];
+};
+
+// The todo island: a client boundary whose SSR children are the fully working,
+// no-JS app (add form + streamed list). React mounts over it when JS is on.
+$todoIsland = Client('TodoApp', ['todos' => $todos], ['$', 'div', ['className' => 'TodoAppView', 'data-ssr' => 'true'], [
+    ['$', $AddForm],
+    Suspense(
+        ['$', 'p', ['className' => 'TodoLoadingText'], ['Loading todos…']],
+        ['$', $LazyList]
+    ),
+]]);
+
+$views = [
+    'todos' => static fn (): array => $todoIsland,
+    'about' => static fn (): array => ['$', $AboutView],
+    'stats' => static function () use ($StatsView, $todos): array {
+        $done = count(array_filter($todos, static fn (array $t): bool => $t['done']));
+        return ['$', $StatsView, ['total' => count($todos), 'done' => $done, 'active' => count($todos) - $done]];
+    },
+];
+
+$path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$current = match ($path) {
+    '/about' => 'about',
+    '/stats' => 'stats',
+    default => 'todos',
+};
+$viewContent = ($views[$current])();
+
+// ---- Flight navigation: return the serialized view tree as JSON ------------
+if (Flight::wants()) {
+    Flight::respond($viewContent, $components);
 }
 
 // ---- Vite assets (optional: only if a client build exists) -----------------
@@ -65,17 +105,7 @@ if (file_exists($manifestPath)) {
     }
 }
 
-// ---- The page -------------------------------------------------------------
-$todos = $store->all();
-
-// A server component that suspends to simulate a slow data source, then renders
-// the list. Streamed into place by StreamingRenderer.
-$LazyList = function () use ($TodoList): array {
-    $todos = await(0.9, fn () => (new Store())->all());
-
-    return ['$', $TodoList, ['todos' => $todos]];
-};
-
+// ---- Full HTML page (shell + current view) --------------------------------
 $head = StreamingRenderer::clientRuntime()
     . '<script id="__todo_state" type="application/json">' . json_encode(['todos' => $todos], JSON_UNESCAPED_SLASHES) . '</script>'
     . $viteCss . $vitePreload;
@@ -90,21 +120,13 @@ $page = ['$', 'html', ['lang' => 'en'], [
     ['$', 'body', null, [
         ['$', 'main', ['className' => 'AppView'], [
             ['$', 'h1', ['className' => 'AppTitleText'], ['PHPX Todo']],
-            ['$', 'p', ['className' => 'AppSubText'], ['Server-rendered with PHPX. Streamed with Suspense. Mutated with server actions. Enhanced with React.']],
-
-            // The client boundary. Its SSR children are the fully-working,
-            // no-JS app (add form + streamed list). React mounts over it.
-            Client('TodoApp', ['todos' => $todos], ['$', 'div', ['className' => 'TodoAppView', 'data-ssr' => 'true'], [
-                ['$', $AddForm],
-                Suspense(
-                    ['$', 'p', ['className' => 'TodoLoadingText'], ['Loading todos…']],
-                    ['$', $LazyList]
-                ),
-            ]]),
+            ['$', 'p', ['className' => 'AppSubText'], ['Server components, Suspense streaming, server actions, and Flight navigation — in PHP.']],
+            ['$', $Nav, ['current' => $current]],
+            ['$', 'div', ['id' => 'view-root', 'className' => 'ViewRootView'], [$viewContent]],
         ]],
         ['$', 'fragment', ['dangerouslySetInnerHTML' => ['__html' => $viteJs]]],
     ]],
 ]];
 
 header('Content-Type: text/html; charset=utf-8');
-(new StreamingRenderer())->stream($page);
+(new StreamingRenderer())->stream($page, $components);

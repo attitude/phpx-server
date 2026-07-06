@@ -19,6 +19,7 @@ PHP already lives on the server side of that door. PHPX compiles JSX-like markup
 | **Suspense streaming** | ✅ | A `Suspense` boundary + PHP **Fibers**: the shell streams first, boundaries resolve out of order. |
 | **Server actions** | ✅ | A named-callable registry, invoked by a plain `<form>` (no JS) **or** by `fetch` (JSON). |
 | **Client components** | ✅ | `Client('Name', $props)` emits a serializable reference; a React island mounts into it. |
+| **Flight navigation** | ✅ | Client-driven route changes: the server returns the serialized tuple tree as JSON; the client rebuilds the view and re-mounts islands, no reload. |
 | **The boundary ("the door")** | ✅ | Only JSON-serializable props cross to the client. Closures stay on the server. |
 
 The one hard limit is physics: **browser interactivity needs JavaScript.** Server components port for free; interactive leaves are React islands — progressive enhancement, not isomorphism.
