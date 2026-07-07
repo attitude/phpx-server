@@ -39,3 +39,26 @@ on top once it loads.
 That one test is the fastest way to understand what "progressive
 enhancement, not isomorphism" (see [Introduction](./introduction.md)) means
 in practice.
+
+## Use it in your project
+
+Neither `attitude/phpx-server` nor its dependency `attitude/phpx` is on Packagist yet, so both need to be declared as VCS repositories.
+
+Composer only reads `repositories` from your project's root `composer.json` — never from a dependency's — and that's also where dev-stability requires live. So your `composer.json` needs both `repositories` entries and both `require` entries below, even though `phpx-server`'s own `composer.json` already declares the `phpx` repository:
+
+```json
+{
+    "require": {
+        "attitude/phpx-server": "dev-main",
+        "attitude/phpx": "dev-main"
+    },
+    "repositories": [
+        { "type": "vcs", "url": "https://github.com/attitude/phpx-server" },
+        { "type": "vcs", "url": "https://github.com/attitude/phpx" }
+    ]
+}
+```
+
+Then run `composer install`.
+
+Once PHPX is published to Packagist, this collapses to `composer require attitude/phpx-server`.
