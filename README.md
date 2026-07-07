@@ -2,6 +2,11 @@
 
 **React Server Components ideas — server components, Suspense streaming, and server actions — ported to PHP with [PHPX](https://github.com/attitude/phpx).**
 
+[![CI](https://github.com/attitude/phpx-server/actions/workflows/ci.yml/badge.svg)](https://github.com/attitude/phpx-server/actions/workflows/ci.yml)
+[![Docs](https://github.com/attitude/phpx-server/actions/workflows/docs.yml/badge.svg)](https://attitude.github.io/phpx-server/)
+[![PHP ≥ 8.1](https://img.shields.io/badge/php-%E2%89%A5%208.1-777bb3)](https://www.php.net/releases/8.1/en.php)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+
 > [!WARNING]
 > Experimental. The API will change. It exists to answer one question: *how much of the RSC model is actually portable to PHP?* The surprising answer is **most of the server half — nearly for free — because PHP already works this way.**
 
@@ -43,6 +48,31 @@ composer example:serve    # http://localhost:8080
 ```
 
 Open it, then reload with JavaScript disabled — the same app still adds, toggles, and deletes, and the list still streams in after the shell.
+
+---
+
+## Install in your project
+
+Neither `attitude/phpx-server` nor its dependency `attitude/phpx` is on Packagist yet, so both need to be declared as VCS repositories.
+
+Composer only reads `repositories` from your project's root `composer.json` — never from a dependency's — and that's also where dev-stability requires live. So your `composer.json` needs both `repositories` entries and both `require` entries below, even though `phpx-server`'s own `composer.json` already declares the `phpx` repository:
+
+```json
+{
+    "require": {
+        "attitude/phpx-server": "dev-main",
+        "attitude/phpx": "dev-main"
+    },
+    "repositories": [
+        { "type": "vcs", "url": "https://github.com/attitude/phpx-server" },
+        { "type": "vcs", "url": "https://github.com/attitude/phpx" }
+    ]
+}
+```
+
+Then run `composer install`.
+
+Once PHPX is published to Packagist, this collapses to `composer require attitude/phpx-server`.
 
 ---
 
@@ -120,7 +150,7 @@ createRoot(mount).render(<TodoApp initialTodos={props.todos} />)
 
 ## Documentation
 
-Full docs — written for **both** backend and frontend developers, bridging the gap — live at the docs site (built with Docusaurus, deployed to GitHub Pages). See [`docs/`](./docs).
+Full docs — written for **both** backend and frontend developers, bridging the gap — live at **https://attitude.github.io/phpx-server/** (built with Docusaurus, deployed to GitHub Pages). Sources are in [`docs/`](./docs).
 
 ## Requirements
 
