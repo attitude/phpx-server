@@ -55,13 +55,12 @@ Open it, then reload with JavaScript disabled — the same app still adds, toggl
 
 Neither `attitude/phpx-server` nor its dependency `attitude/phpx` is on Packagist yet, so both need to be declared as VCS repositories.
 
-Composer only reads `repositories` from your project's root `composer.json` — never from a dependency's — and that's also where dev-stability requires live. So your `composer.json` needs both `repositories` entries and both `require` entries below, even though `phpx-server`'s own `composer.json` already declares the `phpx` repository:
+Composer only reads `repositories` from your project's root `composer.json` — never from a dependency's — so both entries go in yours, even though `phpx-server`'s own `composer.json` already declares the `phpx` repository:
 
 ```json
 {
     "require": {
-        "attitude/phpx-server": "dev-main",
-        "attitude/phpx": "dev-main"
+        "attitude/phpx-server": "^0.1.1"
     },
     "repositories": [
         { "type": "vcs", "url": "https://github.com/attitude/phpx-server" },
