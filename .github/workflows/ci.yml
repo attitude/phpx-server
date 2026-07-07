@@ -7,12 +7,12 @@ on:
 
 jobs:
   # Lints the library with phpstan, compiles the example .phpx components,
-  # runs PHP tests if any exist yet, and smoke-tests the example server.
+  # runs the PHP test suite, and smoke-tests the example server.
   php:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php-version: ['8.1', '8.3']
+        php-version: ['8.1', '8.3', '8.4']
     steps:
       - uses: actions/checkout@v4
 
@@ -37,15 +37,8 @@ jobs:
             exit 1
           fi
 
-      # No tests exist yet; this becomes a real test run automatically once a
-      # future PR adds phpunit.xml (or phpunit.xml.dist) and a `test` script.
-      - name: Run PHP tests (if present)
-        run: |
-          if [ -f phpunit.xml ] || [ -f phpunit.xml.dist ]; then
-            composer test
-          else
-            echo "No phpunit.xml(.dist) found, skipping tests."
-          fi
+      - name: Run PHP tests
+        run: composer test
 
       - name: Smoke-test the example server
         run: |
