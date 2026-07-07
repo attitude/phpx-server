@@ -12,16 +12,16 @@ $TodoItem = function (array $props): array {
 
     return (
         ['$', 'li', ['className'=>(['TodoItemView' => true, 'is-done' => $done]), 'data-id'=>($id)], [
-            ['$', 'form', ['method'=>"POST", 'className'=>"TodoItemFormView"], [
+            ['$', 'form', ['method'=>'POST', 'className'=>'TodoItemFormView'], [
                 (actionFields('todo/toggle', ['id' => $id])),
-                ['$', 'button', ['type'=>"submit", 'className'=>"TodoToggleButton", 'aria-pressed'=>($done ? 'true' : 'false')], [
+                ['$', 'button', ['type'=>'submit', 'className'=>'TodoToggleButton', 'aria-pressed'=>($done ? 'true' : 'false')], [
                     ($done ? '☑' : '☐'),
                 ]],
             ]],
-            ['$', 'span', ['className'=>"TodoItemText"], [($text)]],
-            ['$', 'form', ['method'=>"POST", 'className'=>"TodoItemFormView"], [
+            ['$', 'span', ['className'=>'TodoItemText'], [($text)]],
+            ['$', 'form', ['method'=>'POST', 'className'=>'TodoItemFormView'], [
                 (actionFields('todo/delete', ['id' => $id])),
-                ['$', 'button', ['type'=>"submit", 'className'=>"TodoDeleteButton", 'aria-label'=>"Delete todo"], ['✕']],
+                ['$', 'button', ['type'=>'submit', 'className'=>'TodoDeleteButton', 'aria-label'=>'Delete todo'], ['✕']],
             ]],
         ]]
     );
@@ -31,11 +31,11 @@ $TodoList = function (array $props) use ($TodoItem): array {
     ['todos' => $todos] = $props;
 
     if (empty($todos)) {
-        return (['$', 'p', ['className'=>"TodoEmptyText"], ['Nothing to do. Add something above.']]);
+        return (['$', 'p', ['className'=>'TodoEmptyText'], ['Nothing to do. Add something above.']]);
     }
 
     return (
-        ['$', 'ul', ['className'=>"TodoListView"], [
+        ['$', 'ul', ['className'=>'TodoListView'], [
             (array_map(fn(array $t): array => ['$', $TodoItem, $t], $todos)),
         ]]
     );
@@ -43,17 +43,17 @@ $TodoList = function (array $props) use ($TodoItem): array {
 
 $AddForm = function (): array {
     return (
-        ['$', 'form', ['method'=>"POST", 'className'=>"AddFormView"], [
+        ['$', 'form', ['method'=>'POST', 'className'=>'AddFormView'], [
             (actionFields('todo/add')),
             ['$', 'input', [
-                'className'=>"AddFormInput",
-                'type'=>"text",
-                'name'=>"text",
-                'placeholder'=>"Add a todo…",
-                'autoComplete'=>"off",
+                'className'=>'AddFormInput',
+                'type'=>'text',
+                'name'=>'text',
+                'placeholder'=>'Add a todo…',
+                'autoComplete'=>'off',
                 'required'=>true,
             ]],
-            ['$', 'button', ['type'=>"submit", 'className'=>"AddFormButton"], ['Add']],
+            ['$', 'button', ['type'=>'submit', 'className'=>'AddFormButton'], ['Add']],
         ]]
     );
 };
@@ -75,7 +75,7 @@ $Nav = function (array $props): array {
     );
 
     return (
-        ['$', 'nav', ['className'=>"NavView"], [
+        ['$', 'nav', ['className'=>'NavView'], [
             ($link('/', 'Todos', 'todos', true)),
             ($link('/stats', 'Stats', 'stats')),
             ($link('/about', 'About', 'about')),
@@ -85,14 +85,14 @@ $Nav = function (array $props): array {
 
 $AboutView = function (): array {
     return (
-        ['$', 'div', ['className'=>"ProseView"], [
-            ['$', 'h2', ['className'=>"ProseHeadingText"], ['About this demo']],
-            ['$', 'p', ['className'=>"ProseText"], [
+        ['$', 'div', ['className'=>'ProseView'], [
+            ['$', 'h2', ['className'=>'ProseHeadingText'], ['About this demo']],
+            ['$', 'p', ['className'=>'ProseText'], [
                 'Every page you navigate to here is a server component rendered by PHPX. Clicking the
                 nav does not reload the page — the browser fetches a Flight-style JSON payload (the
                 serialized tuple tree), rebuilds the view, and boots any React islands in place.',
             ]],
-            ['$', 'p', ['className'=>"ProseText"], [
+            ['$', 'p', ['className'=>'ProseText'], [
                 'Turn JavaScript off and the same links still work as plain server-rendered navigation.',
             ]],
         ]]
@@ -103,12 +103,12 @@ $StatsView = function (array $props): array {
     ['total' => $total, 'done' => $done, 'active' => $active] = $props;
 
     return (
-        ['$', 'div', ['className'=>"ProseView"], [
-            ['$', 'h2', ['className'=>"ProseHeadingText"], ['Stats']],
-            ['$', 'ul', ['className'=>"StatsListView"], [
-                ['$', 'li', ['className'=>"StatsItemView"], ['Total', ['$', 'span', ['className'=>"StatsNumberText"], [($total)]]]],
-                ['$', 'li', ['className'=>"StatsItemView"], ['Completed', ['$', 'span', ['className'=>"StatsNumberText"], [($done)]]]],
-                ['$', 'li', ['className'=>"StatsItemView"], ['Active', ['$', 'span', ['className'=>"StatsNumberText"], [($active)]]]],
+        ['$', 'div', ['className'=>'ProseView'], [
+            ['$', 'h2', ['className'=>'ProseHeadingText'], ['Stats']],
+            ['$', 'ul', ['className'=>'StatsListView'], [
+                ['$', 'li', ['className'=>'StatsItemView'], ['Total', ['$', 'span', ['className'=>'StatsNumberText'], [($total)]]]],
+                ['$', 'li', ['className'=>'StatsItemView'], ['Completed', ['$', 'span', ['className'=>'StatsNumberText'], [($done)]]]],
+                ['$', 'li', ['className'=>'StatsItemView'], ['Active', ['$', 'span', ['className'=>'StatsNumberText'], [($active)]]]],
             ]],
         ]]
     );

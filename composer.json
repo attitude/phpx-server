@@ -9,7 +9,7 @@
     ],
     "require": {
         "php": ">=8.1",
-        "attitude/phpx": "dev-main"
+        "attitude/phpx": "^0.4.1"
     },
     "require-dev": {
         "mindplay/php-vite": "^1.1",
